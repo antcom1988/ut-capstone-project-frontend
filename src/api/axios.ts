@@ -1,6 +1,9 @@
 import axios from 'axios'
 
-const apiBaseURL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
+const configuredApiURL = import.meta.env.VITE_API_BASE_URL?.trim()
+const apiBaseURL = configuredApiURL
+  ? (/^https?:\/\//i.test(configuredApiURL) ? configuredApiURL : `https://${configuredApiURL}`).replace(/\/$/, '')
+  : '/api'
 const api=axios.create({baseURL:apiBaseURL,timeout:15000})
 api.interceptors.request.use(config=>{const token=localStorage.getItem('sikapj_token'); if(token) config.headers.Authorization=`Bearer ${token}`; return config})
 api.interceptors.response.use(r=>r,error=>{
