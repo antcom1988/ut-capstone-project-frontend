@@ -1,5 +1,7 @@
 import axios from 'axios'
-const api=axios.create({baseURL:'/api',timeout:15000})
+
+const apiBaseURL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
+const api=axios.create({baseURL:apiBaseURL,timeout:15000})
 api.interceptors.request.use(config=>{const token=localStorage.getItem('sikapj_token'); if(token) config.headers.Authorization=`Bearer ${token}`; return config})
 api.interceptors.response.use(r=>r,error=>{
  const status=error.response?.status
