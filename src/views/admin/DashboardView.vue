@@ -65,7 +65,7 @@ onMounted(() => {
 
       <!-- Quick Threshold Setting -->
       <div class="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm text-sm">
-        <span class="text-slate-600 font-medium text-xs">Peringatan:</span>
+        <span class="text-slate-600 font-medium text-xs">Control Alert:</span>
         <select
           v-model="thresholdMonths"
           @change="updateThreshold"
