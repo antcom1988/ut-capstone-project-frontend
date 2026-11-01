@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '@/api/axios'
 import type { DashboardSummary } from '@/types'
 
@@ -9,6 +9,24 @@ const isUpdatingThreshold = ref(false)
 const isLoading = ref(true)
 const loadError = ref('')
 const feedback = ref('')
+const alertFilterMonths = ref(0)
+
+const filteredAlerts = computed(() => {
+  const alerts = summary.value?.alerts ?? []
+  const now = new Date()
+  if (alertFilterMonths.value === -1) {
+    return alerts.filter((alert) => new Date(alert.tanggal_jatuh_tempo) < now)
+  }
+  if (!alertFilterMonths.value) return alerts
+
+  const limit = new Date(now)
+  limit.setMonth(limit.getMonth() + alertFilterMonths.value)
+
+  return alerts.filter((alert) => {
+    const dueDate = new Date(alert.tanggal_jatuh_tempo)
+    return dueDate >= now && dueDate <= limit
+  })
+})
 
 async function fetchDashboard() {
   isLoading.value = true
@@ -137,11 +155,22 @@ onMounted(() => {
 
     <!-- Tabel Control Alert System KGB & KP -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold text-slate-800">Daftar Peringatan KGB & Kenaikan Pangkat</h2>
           <p class="text-xs text-slate-500">Kalkulasi otomatis berdasarkan TMT KGB dan TMT Pangkat Terakhir</p>
         </div>
+        <label class="flex items-center gap-2 text-xs text-slate-600 font-medium">
+          Filter jatuh tempo:
+          <select v-model="alertFilterMonths" class="bg-slate-50 border border-slate-300 rounded-md px-2 py-1.5 text-xs font-semibold text-slate-700 outline-none">
+            <option :value="0">Semua</option>
+            <option :value="1">1 bulan ke depan</option>
+            <option :value="2">2 bulan ke depan</option>
+            <option :value="3">3 bulan ke depan</option>
+            <option :value="6">6 bulan ke depan</option>
+            <option :value="-1">Terlambat</option>
+          </select>
+        </label>
       </div>
 
       <div class="overflow-x-auto">
@@ -157,7 +186,7 @@ onMounted(() => {
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 text-slate-700">
-            <tr v-for="item in summary?.alerts" :key="item.nip + item.tipe_alert" class="hover:bg-slate-50/80 transition-colors">
+            <tr v-for="item in filteredAlerts" :key="item.nip + item.tipe_alert" class="hover:bg-slate-50/80 transition-colors">
               <td class="px-6 py-3.5">
                 <div class="font-medium text-slate-900">{{ item.nama_lengkap }}</div>
                 <div class="text-xs text-slate-400 font-mono">{{ item.nip }}</div>
@@ -201,9 +230,9 @@ onMounted(() => {
                 </span>
               </td>
             </tr>
-            <tr v-if="!summary?.alerts || summary.alerts.length === 0">
+            <tr v-if="filteredAlerts.length === 0">
               <td colspan="6" class="px-6 py-8 text-center text-slate-400">
-                Tidak ada data pegawai.
+                Tidak ada data pada rentang waktu yang dipilih.
               </td>
             </tr>
           </tbody>
